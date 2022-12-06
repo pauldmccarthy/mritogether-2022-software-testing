@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+
+[project]
+name         = "mri-together-software-testing"
+version      = "1.0.0"
+license      = { text="Creative Commons" }
+dependencies = ["numpy", "pytest", "coverage", "pytest-cov"]
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts    = "-v --cov=analysis"
+testpaths  = [
+  "tests"
+]
