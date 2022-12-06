@@ -4,6 +4,9 @@ Why you should test your software
 *and how you can do it*
 
 
+[![Test status](https://github.com/pauldmccarthy/mritogether-2022-software-testing/actions/workflows/tests.yml/badge.svg)](https://github.com/pauldmccarthy/mritogether-2022-software-testing/actions)
+
+
 This repository contains some example code used to demonstrate automated
 testing of a Python project using `pytest`, `coverage`, and GitHub Actions
 (GHA) integration.
