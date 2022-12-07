@@ -1,0 +1,8 @@
+presentation_notes.txt
+__pycache__
+*.pyc
+.coverage
+.pytest_cache
+.dev.env
+.dev.sh
+*.egg-info
