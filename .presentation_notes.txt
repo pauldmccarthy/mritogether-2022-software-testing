@@ -307,9 +307,9 @@ The second point I'd like to make concerns JupyterLab and Jupyter Notebooks.
 I have to confess that I don't use JuptyerLab all that much, but it seems to
 keep getting better and better, and so I think that it is probably a good
 choice for working with Python. But if you are writing your code as a Jupyter
-Notebook, you need to be aware that your code is likely going to be more
+Notebook, you need to be aware that your code is may be slightly more
 difficult to share with others, and to run on other systems, than if you were
-writing regular Python code. I won't discuss this any more, as it is beyond
+writing regular Python code.  I won't discuss this any more, as it is beyond
 the scope of this talk, but I felt that I needed to mention it.
 
 
@@ -517,15 +517,153 @@ will be calling a mocked version of load_parameters which just returns (10,
 is correct.
 
 If you're writing tests in Python, mock is a super useful tool to have at your
-disposal.
+disposal, and there are similar libraries in other languages.
 
 
-Integration tests - at least have them for most common usage
-scenarios (e.g. test that "my_command -h" doesn't crash)
+>>
+
+So once we've written our tests, we need to be able to run them. There are a
+few options for running Python tests, but I recommend using pytest and
+coverage. In simple terms, pytest will search through your entire code base,
+and in simple terms will search through your code base, and will run all
+functions that it finds which begin with `test_`. And coverage will keep track
+of which lines of code were actually executed, and give you a code coverage
+report - which parts of your code were _covered_ by your tests.
 
 
-Conclusion
- - Use good editor to reduce mistakes
- - Organise code to make easy to test
- - Write code to test code
- - Automate tests using CI
+<demonstration>
+
+
+>>
+
+So I've got a few guidelines on how to go about writing tests. First of all,
+it's much easier to write tests for a piece of code while you're writing the
+code itself. Once you've decided that you need to write a function which
+performs a specific task, you should already be able to start thinking about
+how you might go about testing that function. It's usually more difficult to
+write tests for existing code - if you write a bunch of code and think "oh
+I'll just get it finished now, and will add some tests later", there's a good
+chance that you will never get around to it.
+
+So I would recommend writing your code, and writing your test, in parallel,
+and regularly running the test as you develop the code. It's sometimes
+possible to even start with the test case. Developing in this way will really
+help you to understand and trust your code, in particular its corner and
+edge-cases, in much more detail.
+
+
+>>
+
+It's really helpful to write tests which probe your code at different
+levels. Up to this point I've been talking primarily about unit tests -
+this is where we have a single piece of code such as a function, and we
+just want to test that one function. There's another class of test called
+integration tests - these are just as, if not more, valuable than unit
+tests, as they will test your program as a whole, to make sure that all of
+the individual components are working together.
+
+
+
+As a real world example of unit tests and integration tests:
+
+https://git.fmrib.ox.ac.uk/fsl/fsleyes/fsleyes/-/blob/master/fsleyes/tests/test_annotations.py
+https://git.fmrib.ox.ac.uk/fsl/fsleyes/fsleyes/-/blob/master/fsleyes/tests/test_render_3d.py
+
+
+I also personally think that there is great value in what I call "sanity
+check" integration tests. For example, if you are writing a command-line
+program, you could add "myprogram --help" as a test - the sole purpose of this
+is to ensure that the usage text is printed, and that you haven't
+inadvertently introduced a really critical bug somewhere.
+
+
+>>
+
+Another very important class of tests are regression tests - these kinds of
+tests are added in response to bugs. Whenever I find a bug, the first thing I
+will do is write a test function which can reproduce the bug. Then I'll
+iteratively work on the fix, periodically using the test case to check whether
+the bug is still present. When the test case passes, I can close the bug report.
+
+But keeping the test case around is really valuable - it encodes a particular
+behaviour or piece of logic which your software must adhere to. If you add it
+to your suite of tests and run it regularly, then you will know if that logic
+or behaviour is ever broken in the future, and you will know that it needs to
+be fixed.
+
+
+>>
+
+So we're on to the final point; I've given you an idea of how you can run your
+test suite by hand on your own computer, but a much better option is to have
+your tests run automatically whenever your code changes. And if you're using
+GitHub or GitLab, this is really easy to set up using what is referred to as
+Continuous Integration, or CI.
+
+And the way that this works is as follows:
+
+
+>>
+You make some changes to your code, and you commit them and push them to
+GitHub.
+
+
+>>
+GitHub gets in touch with the CI provider and notifies it of the change.
+
+>>
+The CI provider starts up a docker container or virtual machine, or possibly
+even a physical machine if you need a mac or GPU hardware.
+
+>>
+Then your code is cloned to the container or VM, and runs a script, which
+you have prepared, which sets up the environment, installs dependencies,
+builds your project if necessary, and then runs your tests.
+
+
+>>
+
+Now these days, GitHub actually does everything for you - it hosts your code,
+and can also be used for CI through something called GitHub Actions.  But
+there are a number of other CI providers that can be integrated with GitHub,
+which you might prefer over GitHub for a range of reasons.  And if you are
+using GitLab, you can set things up so that your CI jobs get executed on your
+own hardware.
+
+
+>>
+
+Now on that last point, this is my bookshelf at home, and on the bottom shelf
+lives an old macbook laptop which is always on, and which I use to run
+macOS-specific CI tests. So I can push some changes to our internal GitLab
+instance, and after a few minutes I'll hear the fans start whirring as the CI
+jobs start running.
+
+
+>>
+
+So I've set up an example project on github which contains the OLS code and
+associated tests that I've been presenting, and which is set up so that the
+tests are automatically executed using GHA whenever I push new commits to
+github.
+
+<demonstration>
+
+
+>>
+
+So that's it; just to recap, I've introduced four basic principles that I
+strongly encourage you to adopt in your own development, and which will
+help you to minimise the number of errors that creep into your code:
+
+ - Use a good code editor to reduce the mistakes that you make
+ - Organise your code sensibly to make it easy to test, and easy to
+   understand
+ - Write code to test your code; write unit and integration tests as you
+   develop the code, and write regression tests in response to bugs
+ - And finally run those tests regularly and automatically using
+   continuous integration.
+
+
+So thanks very much for listening, and thanks again to the MRITogether
+organisers.
