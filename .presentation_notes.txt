@@ -1,0 +1,531 @@
+>> Intro
+
+
+Hi, my name is Paul McCarthy, and I'm based at the University of Oxford in the
+UK.  First of all I'd like to thank the MRITogether organisers for putting
+this event together and inviting me to give this talk - I feel like it's a
+real privilege to be able to speak to you all today.
+
+
+So a little bit about myself; I'm a software engineer at the Wellcome Centre
+for Integrative Neuroimaging, formerly known as FMRIB, and I spend most of my
+time working on the FSL software library. I'm the developer and maintainer of
+FSLeyes the MRI image viewer, and in the past few years have been spending a
+lot of time trying to modernise the core FSL code base and development
+practices to bring it up to modern standards.
+
+
+So in this talk I'm going to try and convince you that you really should be
+testing your software a lot more than you are probably already doing.
+
+
+>> Overview
+
+
+My talk is going to be structured as follows: I'm going to start off by
+convincing you that testing is necessary. Then I'm going to introduce a few
+basic rules, or guiding principles in software development, which you can
+apply to your own work to help you reduce the number of mistakes that you
+make, and bugs that you introduce into your code, when writing software.
+
+
+I'm then going to focus a little bit on specifically testing Python
+applications - this talk is somewhat biased towards Python, as this is the
+language that I've spent most of my time working in over the past 8 or so
+years.
+
+
+And finally I'm going to give a quick demonstration to show you how easy
+it is to have your tests automatically executed using GitHub Actions.
+
+
+Before we get started, I want to emphasise that this is intended as a general
+talk, rather than a demonstration or practical session. I will mention a few
+specifics, but I'm going to talk mostly about general development ideas,
+concepts, and practices which I would recommend that you incorporate into your
+own software development work.
+
+
+>> Science in 2022
+
+
+So I'm going to make a claim, that the vast majority of scientific research
+results published today, and over the past couple of decades, have been
+generated using some kind of software. And I would wager that a large
+proportion of these results have been generated using custom or bespoke
+software scripts, written by the researcher themselves, or possibly some poor
+unwitting undergraduate or graduate student.
+
+
+And it is these research results, along with our own custom software, that we
+are all building our work upon to generate our own research results. So we are
+placing an enormous amount of trust in both the commercial and freely
+available software packages that we use, and in the custom software scripts
+that we or our students or colleagues have written.
+
+
+>> Software development practices
+
+
+And I think there is a bit of a problem in having such blind faith in the
+software that we're using. Because there is often a stark difference in the
+ways in which research quality code is developed, when compared to commerical
+or industrial quality code.
+
+In an industrial or commercial setting, software is often created according to
+a very rigorous development methodology, where a lot of emphasis is placed on
+planning and designing the code base, and the level of testing required is
+much more strict.
+
+Whereas in a research setting, software is created in a much more organic,
+ad-hoc manner.
+
+And there are a range of reasons as to why this is the case; private companies
+often have a lot more resources than academic and research institutions, so
+are able to to dedicate more people to each aspect of the software development
+process. For example. "testing engineer" is a full-time role in larger
+companies.
+
+And in certain sectors, such as production of medical devices, companies
+developing commercial products are often working at a much higher level of
+risk - if you release a new software-based medical diagnostic tool that is to
+be used in a clinical setting, or you are writing control software for a
+hydro-electric power station, you will want to be very sure that your software
+is doing its job correctly, because if it's not, you will be directly
+affecting peoples' lives.
+
+And companies working in sectors such as this are required by law to adhere to
+a range of software development standards and practices which are in place to
+minimise the risk of bugs being introduced into the code.
+
+This all sounds _very_ different to what I have personally observed and
+experienced as a software engineer in an academic research environment, and
+I'm sure that many of you will agree.
+
+
+But I don't mean to be too negative - I genuinely believe that research
+software development practices are improving - over the past decade, the level
+of awareness of the importance of software has risen dramatically, and more
+focus is being placed on the robustness of software tools that a particular
+research project has used.
+
+
+I feel that some circles in the research community are now at the point where
+studies will only be taken seriously if they can demonstrate that the software
+that they have based their work on has been developed in a robust manner, at
+the very least with automated testing and a formal versioning scheme.
+
+
+And I would like to think that, some time in the future, high profile research
+studies will be _required_ to adhere to a minimal set of software development
+practices, akin to the requirements that are placed on private companies,
+although this may be quite a way off.
+
+
+>> Compiled vs interpreted languages
+
+
+So I'm now going to spend a little bit of time talking about the types of
+programming languages that we use in research, and why the choice of language
+often means that we need to be more careful, and introduce additional
+safeguards, when writing our code.
+
+
+Programming languages can be very broadly divided into two different
+classes. On the left, I'm talking about compiled, or _strongly-typed_
+languages such as C, C++ and Java. And on the right, I'm talking about
+interpreted, or _dynamically typed_, languages, such as Python, MATLAB, and
+R. And I would hazard a guess that most research software is written
+in interpreted languages such as MATLAB or Python.
+
+
+>>
+
+When using a strongly-typed language, we develop our code like this: First
+we write our code in our language of choice; then we pass that code to
+a compiler, which converts it into a binary executable; and then we are able
+to run our program.
+
+
+>>
+
+When using a dymanically-typed language, the process is simpler: we write our
+code, and then we pass it directly to an interpreter which runs it immediately.
+
+
+>>
+
+So using an interpreted language is simpler, but it comes at a cost: when
+using a compiled language, the compiler needs to read every single line of
+code, so if there is a basic error anywhere, such as a wrong variable name
+or a call to a non-existent function, the compiler will complain, and you
+won't even get the chance to run your code.
+
+
+>>
+
+In contrast, when using an interpreted lannguage, the interpreter will read
+the code _as it gets executed_. If there is an error in the main part of your
+code, your program will crash. But there could be errors in other parts of
+your code which don't always get executed - these errors can be hard to find,
+as they may only manifest themselves when your software is run with an
+obscure configuration.
+
+
+>>
+
+So when using a compiled language, we can rely on the compiler to eliminate
+a whole class of errors from our code, so that it is not even possible to
+introduce these types of errors. But the compiler won't catch everything;
+it will catch syntax and some semantic errors, such as invalid variable or
+function names, but it won't catch logic errors, such as off-by-one errors
+in a for-loop.
+
+
+>>
+
+But things are worse when using an interpreted language because we don't
+have a compiler to rely upon, so we run the risk of introducing a whole
+range of additional mistakes into our code.
+
+So we need to be much more careful when using an interpreted language, and
+introduce some additional safeguards to minimise the risk of introducing
+these errors into our code.
+
+
+>> You will make mistakes
+
+
+And no matter how smart you are, you _will_ make mistakes. I work alongside
+people who are far more intelligent than myself, and yet I am continually
+finding simple silly bugs that could have easily been avoided, by adopting a
+few simple development practices.
+
+
+And I'm now going to go through what I think are four of these basic
+development practices which I think everybody who writes software should
+follow in their own work. You can think of these as four basic rules,
+principles or guidelines which, if you follow them, will give you a lot
+more confidence in the robustness of the code that you write.
+
+
+And I'm now going spend a little time going through each of them in a bit
+more detail.
+
+
+>> 1. Use a good editor
+
+So the first rule is you should be using a good editor. I added the first
+bullet point because the MATLAB code editor is actually pretty decent, so
+if you're using MATLAB, you should just continue using that.
+
+But for everybody else, you really shouldn't be using a plain text editor to
+write code. At the _very least_, your editor should be able to detect and
+highlight basic syntax errors, such as mis-spelled variable names, or improper
+indentation if you are writing Python.
+
+And ideally your editor should be able to detect and highlight more
+complicated errors; if you are using Python, you can add type annotations to
+your code, so that your editor will know the types of all of your variables,
+and be able to detect when they are being used improperly. And for larger
+code-bases, features like automatic code completion, refactoring, and
+code navigation are essential, as they allow you to accomplish tasks much
+more quickly.
+
+
+>>
+
+And I'll just quickly demonstrate some of these features.  Here's an example
+of a really basic Python error - the editor has detected that one line has
+been indented badly. To be honest, this is a slightly contrived example,
+because a _good_ Python editor wouldn't even allow you to make mistakes like
+this.
+
+
+>>
+
+Here we can see an example of code completion - the user has created an object
+called `resp`, and has then typed `js`, and the editor has automatically
+popped up a list of suggested methods that could be called. So the user can
+just select a method from the list and hit enter to complete the rest of the
+method name. This example is a bit contrived as the completed method name
+`json` is so short, but for certain libraries which use long function and
+method names, this can be a real time saver, and will also reduce the chances
+of you making mistakes when typing out long function names.
+
+
+>>
+
+Here's another example of code completion, but this is a bit more
+sophisticated, as it uses typing annotations. The `episode_id` input parameter
+has been annotated as being of type `int`, and the editor has detected this,
+and is able to offer type-specific suggestions of all of the attributes and
+methods that are available on an int object.
+
+
+>>
+
+And finally here's an example of refactoring. Instead of trawling through your
+entire code base and doing a global search and replace on every use of the
+`ControllerBase` class, in this editor you can simply right click on the class
+name and choose "Rename", and the editor will do all of the work for you.
+
+
+And so what we're essentially doing, when we choose to use a good code editor
+to develop in an interpreted programming language such as Python, is we're
+replacing the job of the compiler; in a compiled language, the compiler is
+going to catch all of the silly typos and mistakes that we make while writing
+our code.  A good editor will highlight mistakes, and offer code completion
+features which, if you use them, make it difficult, or even impossible, to
+make those basic mistakes.
+
+So I can't emphasise enough the importance of using an editor which is
+designed for the job.
+
+
+>>
+
+And if you're coding in python, there are several options available to you.  I
+would personally recommend any of the first three editors on this list -
+PyCharm, JupyterLab and Spyder are all really good Python editors. The other
+editors on this list can be configured to work well with Python, but they
+require some work to get them set up nicely; whereas the first three will all
+work essentially out of the box.
+
+I do have a couple of additional points to make here; one of the most awkward
+and frustrating aspects of working with Python is managing environments; I
+would wager that everybody here listening has multiple Python installations
+and environments on their computers, and it can become really easy to lose
+track of which python environment you are using at any given time. And you
+need to make sure that when you are using a particular editor to work on your
+python code, that the editor is configured to use the correct Python
+environment.  PyCharm can actually handle the creation and activation of
+python environments for you, so I would definitely recommend it as one of the
+best options.
+
+The second point I'd like to make concerns JupyterLab and Jupyter Notebooks.
+I have to confess that I don't use JuptyerLab all that much, but it seems to
+keep getting better and better, and so I think that it is probably a good
+choice for working with Python. But if you are writing your code as a Jupyter
+Notebook, you need to be aware that your code is likely going to be more
+difficult to share with others, and to run on other systems, than if you were
+writing regular Python code. I won't discuss this any more, as it is beyond
+the scope of this talk, but I felt that I needed to mention it.
+
+
+>> 2. Organise your code sensibly
+
+So onto my second rule: organise your code sensibly so that it is easy to
+test. I'm going to demonstrate this with a really simple example - this bit of
+code runs a linear regression. We give it a model, loaded here as
+`design.txt`, and some data, loaded as `input.txt`, and it will scale the
+model to fit the data and return the scaling paramters, the `fit`, and the
+residual error.
+
+So to be honest this code is just fine as-is. If this is all your program
+needs to do, then you can just leave it as shown here. But I'd like you to
+imagine that this not a stand-alone script, but is a part of some larger, more
+complex code base, and maybe is doing something a little more complicated than
+an OLS regression.
+
+And in this context, this code may not be ideal. This is a stand-alone script,
+so if we wanted to test it, we would need to call it from our shell
+environment. This might be fine for this simple example, but for larger code
+bases it would become very tedious very quickly.
+
+
+>>
+
+I'm going to propse an alternative design which I argue makes this code easier
+to test and to validate. This is quite a bit longer, but has some key
+advantages. First of all, I've separated out the core algorithm that implements
+the OLS regression into a self-contained function. And second of all, I've put
+the procedural bit of code, which loads the input and saves the result, into
+another function called `main`.
+
+
+>>
+
+And making these small changes makes the code much easier to test. The key
+difference is that all of the pieces of code can be called programmatically,
+and, apart from the main routine loading from and saving to files, don't have
+any external or implicit dependencies or side-effects.
+
+
+
+>>
+
+Every piece of software is different - the particular task that a piece of
+software has to accomplish will dictate its design to a certain extent. And
+for this reason I can't really offer any specific guidance or advice on how to
+organise _any_ piece of software. So instead I'm going to offer a few
+guidelines and pieces of advice that I would recommend you keep in mind when
+writing code.
+
+So the first piece of advice is to try and keep things simple and
+self-contained. Each function that you write should be responsible for doing
+one thing, and ideally all of the pieces of information that the function
+needs should be passed in as arguments.
+
+I mentioned earlier about implicit dependencies [back 2] - we can see an
+example of this in the code on the left - it implicitly depends on the
+existence of the two input files `input.txt` and `design.txt` - this code
+can't even be executed, let alone tested, if those files don't exist.
+
+And you should try and avoid writing functions that have side-effects, or at
+least keep those functions isolated from your core routines which are doing
+the important work. An example of what I mean by 'side-effect' is a function
+which, whenever you call it, modifies some global variable, which will change
+the behaviour or the next invocation of the function, or of some other
+function. This is a kind of analogue of an implicit dependency - a function
+which has side-effects will have an implicit effect on the behaviour of other
+parts of your code. And this will make all of your code more difficult to test
+in isolation.
+
+So my recommendationn is to try and write as much of your code as possible in
+this "pure" style, where there are no implicit dependencies or reliance on
+global state, where all of the pieces of information that are needed by a
+function are passed as input arguments, and all of the pieces of information
+that the function produces are explicitly returned.
+
+
+>>
+
+And this brings me to my next piece of advice - wherever possible, you should
+try and separate your core code, the code which does the number crunching,
+from any other code which loads and saves data, which reads settings from
+configuration files, and which interacts with the user.
+
+
+Isolating your core routines from the messiness of the real world will make
+them easier to programmatically call with some fake or test data. And if
+you're careful, you can also write your input/output routines so they are
+testable too.
+
+
+The ultimate aim here is to try and de-couple all of the different tasks that
+your software performs into isolated, self-contained pieces of code that are
+_easy to call in isolation_. If you can achieve this, then writing test cases
+for each piece of code will be trivial.
+
+
+>>
+
+The next couple of slides are not really specific to testing, but are more
+focused on the overall design of your codebase. When you're developing some
+software, you should keep in mind the overarching structure of the code base
+when you're enhancing or adding new functionality, and you should structure
+your code base so that it is organised in a clear, sensible, and logical
+manner. This comment specifically focuses on Python, but the same concept
+applies regardless of which language you are using - you should use the
+constructs provided by the language to arrange your code sensibly.
+
+The point of doing this is to make your code easier to understand. If your
+code is split over dozens of files with obscure names in a single directory,
+and with no evident structure, you are going to have a difficult time coming
+back to the code base in 12 months time to try and fix an obscure bug that one
+of your users has just reported, and you are going to have an increased risk
+of accidentally breaking something when you change the code. And you will be
+making it more difficult in getting other contributors on board to work on the
+code base. If your code is easy to understand and reason about, then it will
+be easy to maintain into the future.
+
+
+>>
+
+I've already mentioned that I can't provide any specific or definitive answers
+as to how _you_ should structure _your_ code, as there is no one solution that
+will work for every piece of software. But what I am trying to do here is to
+get you to think about the bigger picture when you are writing and organising
+your code base.
+
+
+>>
+
+And on that point, while you are working on a piece of code, if you realise,
+or start to feel that the current structure or architecture is going to cause
+scalability issues, in terms of both performance, and of the extensibility of
+the code, or if it is simply becoming difficult to understand, then you should
+do something about it and restructure the code.  If you have been writing
+tests during development, then you should be able to re-arrange and re-factor
+your code with the confidence that you will know if you've broken something.
+If your tests are passing, and you make some changes, and then the tests start
+failing, you will know which changes caused the failure.
+
+
+>>
+
+And of course it goes without saying that you should be using version control,
+and you should learn how to use it effectively. Because if you learn and apply
+the basics of git, then you will have no fear in tearing your code apart and
+rebuilding it, because it is trivial to experiment with and prototype changes
+without worrying about losing or overwriting the one version of your code that
+you know works.
+
+
+>> 3. Write code to test your code
+
+So let's go back to our example and write some tests. For most scientific
+software, in order to test the code, we're going to need some data. For this
+example, I can easily just generate some toy data; it's just as easy to to
+store some pre-generated benchmark data alongside your code, or to download it
+when the tests are run.
+
+>>
+
+And for this example, this is my test - it passes my test data to the `ols`
+function, and then checks that the result is correct. In this case there is no
+noise, so I know my scaling parameters should be exactly 5 and 20, and the
+residuals should be zero. But it's easy to make the criteria more
+sophisticated based on what I am testing, for example I could test that the
+standard deviation of the residuals is within some acceptable tolerance.
+
+>>
+
+And the way that I've structured this toy example has actually made it
+possible to test my main routine as well. All I have to do is save my test
+data out to file, and then load the results back in; so I'm able to test
+pretty much every line of code in this example.
+
+
+>>
+
+Obviously real world code is going to be a bit more complicated, and sometimes
+you have no choice but to introduce implicit dependencies into your code. But
+that doesn't mean you can't test it. Python has this really useful built in
+module called mock, and there are similar libraries out there for other
+languages. Mock basically allows you to "mock" or "fake" specific parts of
+your code. You can mock your own code, but you can also mock functions from
+third party libraries or in the standard library in exactly the same way.
+
+
+So in this example, the core routine that I want to test is in the
+`do_analysis` function. But `do_analysis` has an implicit dependency - it
+loads some configuration parameters from a text file using the
+`load_parameters` function. And I want you to pretend, for the purposes of
+this example, that it's not possible to just generate `analysis_config.txt` -
+it might be an unknown or proprietary file format.
+
+
+>>
+
+But what we can do is mock out the load_parameters function so that, in our
+unit test, it will return a fixed set of values. So we can call do_analysis as
+normal, and do_analysis will think that it's calling load_parameters. But it
+will be calling a mocked version of load_parameters which just returns (10,
+10, 10). So now we can call our function as normal, and check that the result
+is correct.
+
+If you're writing tests in Python, mock is a super useful tool to have at your
+disposal.
+
+
+Integration tests - at least have them for most common usage
+scenarios (e.g. test that "my_command -h" doesn't crash)
+
+
+Conclusion
+ - Use good editor to reduce mistakes
+ - Organise code to make easy to test
+ - Write code to test code
+ - Automate tests using CI
