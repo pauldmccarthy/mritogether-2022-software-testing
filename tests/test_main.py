@@ -33,13 +33,6 @@ def test_ols():
     assert np.isclose(err, 0)      .all()
 
 
-
-def test_ols1():
-    fit, err = main.ols(2 * test_data, test_model)
-    assert np.isclose(fit, [10, 40]).all()
-    assert np.isclose(err, 0)       .all()
-
-
 def test_main():
     with tempdir():
         np.savetxt('data.txt', test_data)
